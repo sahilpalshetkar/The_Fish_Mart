@@ -26,7 +26,7 @@ import MyOrders from "./pages/MyOrders";
 import OrderDetails from "./pages/OrderDetails";
 import OwnerOrders from "./pages/OwnerOrders";
 
-export const serverUrl = "http://localhost:9000";
+export const serverUrl = "https://the-fish-mart-server.onrender.com";
 
 const App = () => {
   const { userData } = useSelector((state) => state.user);
