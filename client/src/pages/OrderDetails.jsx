@@ -124,7 +124,7 @@ const OrderDetails = () => {
           withCredentials: true,
         },
       );
-
+      console.log("Cancel response:", response.data);
       if (response.data.success) {
         toast.success("Order cancelled successfully");
 
@@ -132,6 +132,7 @@ const OrderDetails = () => {
           ...prev,
           orderStatus: "cancelled",
         }));
+        navigate("/my-orders");
       }
     } catch (error) {
       console.error("Cancel order error:", error);

@@ -56,6 +56,11 @@ const cartItemSchema = new mongoose.Schema(
       min: 1,
       default: 1,
     },
+    requestedWeight: {
+      type: Number,
+      required: true,
+      min: 0.001,
+    },
   },
   {
     _id: true,

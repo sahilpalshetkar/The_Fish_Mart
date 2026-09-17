@@ -2,6 +2,8 @@ import express from "express";
 import isAuth from "../middlewares/isAuth.js";
 import {
   acceptOrder,
+  cancelOrder,
+  completeAnalytics,
   getCurrentOrder,
   getDeliveryBoyAssignments,
   getMyOrders,
@@ -9,6 +11,8 @@ import {
   getOwnerOrders,
   getTodayDeliveries,
   placeOrder,
+  releaseExpiredReservations,
+  releaseExpiredReservationsInternal,
   sendDeliveryOtp,
   updateDeliveryStatus,
   updateOrderStatus,
@@ -77,6 +81,27 @@ orderRouter.get(
   isAuth,
   allowRoles("deliveryBoy"),
   getTodayDeliveries,
+);
+
+orderRouter.put("/cancel/:orderId", isAuth, cancelOrder);
+
+orderRouter.get(
+  "/complete-analytics",
+  isAuth,
+  allowRoles("admin"),
+  completeAnalytics,
+);
+
+orderRouter.post(
+  "/release-expired-reservations",
+  isAuth,
+  allowRoles("admin"),
+  releaseExpiredReservations,
+);
+
+orderRouter.post(
+  "/internal/release-expired-reservations",
+  releaseExpiredReservationsInternal,
 );
 
 export default orderRouter;

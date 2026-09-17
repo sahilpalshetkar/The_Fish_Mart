@@ -24,6 +24,7 @@ const ForgotPassword = () => {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetToken, setResetToken] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -55,7 +56,6 @@ const ForgotPassword = () => {
         { withCredentials: true },
       );
 
-      console.log("OTP sent:", result.data);
       setStep(2);
     } catch (error) {
       console.error("Send OTP error:", error);
@@ -74,7 +74,7 @@ const ForgotPassword = () => {
       setErr("Please enter the OTP.");
       return;
     }
-    if (!/^\d{4}$/.test(otp)) {
+    if (!/^\d{6}$/.test(otp)) {
       setErr("Please enter a valid 6-digit OTP.");
       return;
     }
@@ -86,7 +86,7 @@ const ForgotPassword = () => {
         { email, otp },
         { withCredentials: true },
       );
-      console.log("OTP verified:", result.data);
+      setResetToken(result.data.resetToken);
       setStep(3);
     } catch (error) {
       console.error("Verify OTP error:", error);
@@ -122,14 +122,13 @@ const ForgotPassword = () => {
       const result = await axios.post(
         `${serverUrl}/api/auth/reset-password`,
         {
-          email,
+          resetToken,
           newPassword,
         },
         {
           withCredentials: true,
         },
       );
-      console.log("Password reset:", result.data);
       navigate("/signin");
     } catch (error) {
       console.error("Reset password error:", error);
@@ -162,7 +161,7 @@ const ForgotPassword = () => {
     },
     2: {
       title: "Verify your email",
-      description: `We've sent a 4-digit verification code to ${email}.`,
+      description: `We've sent a 6-digit verification code to ${email}.`,
       label: "EMAIL VERIFICATION",
     },
     3: {

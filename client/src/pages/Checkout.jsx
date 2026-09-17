@@ -21,10 +21,8 @@ import { clearCart } from "../redux/cartSlice";
 const Checkout = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const apikey = import.meta.env.VITE_GEOAPIKEY;
 
   const { cartItems, totalAmount } = useSelector((state) => state.cart);
-  const { address, location } = useSelector((state) => state.map);
 
   const {
     userData,
@@ -37,11 +35,7 @@ const Checkout = () => {
   const [pincodeStatus, setPincodeStatus] = useState(null);
   const [checkingPincode, setCheckingPincode] = useState(false);
   const [placingOrder, setPlacingOrder] = useState(false);
-
-  // PAYMENT METHOD
   const [paymentMethod, setPaymentMethod] = useState("cod");
-
-  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const subtotal = Number(totalAmount || 0);
   const deliveryFee = 0;
@@ -101,6 +95,10 @@ const Checkout = () => {
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
 
+    if (placingOrder) {
+      return;
+    }
+
     if (!formData.fullName.trim()) {
       toast.error("Please enter your full name");
       return;
@@ -140,14 +138,14 @@ const Checkout = () => {
       setPlacingOrder(true);
 
       const deliveryAddress = {
-        fullName: formData.fullName,
-        mobile: formData.mobile,
-        email: formData.email,
-        address: formData.address,
-        landmark: formData.landmark,
-        city: formData.city,
-        state: formData.state,
-        pincode: formData.pincode,
+        fullName: formData.fullName.trim(),
+        mobile: formData.mobile.trim(),
+        email: formData.email.trim(),
+        address: formData.address.trim(),
+        landmark: formData.landmark.trim(),
+        city: formData.city.trim(),
+        state: formData.state.trim(),
+        pincode: formData.pincode.trim(),
       };
 
       const response = await axios.post(
@@ -156,32 +154,32 @@ const Checkout = () => {
           cartItems,
           paymentMethod,
           deliveryAddress,
-          totalAmount: total,
         },
         {
           withCredentials: true,
         },
       );
 
-      // COD
       if (paymentMethod === "cod") {
         dispatch(addMyOrder(response.data.order));
-        console.log(response.data);
+
         await clearCartFromDatabase();
+
         navigate("/order-placed", {
           state: {
             orderId: response.data.order?._id,
           },
         });
+
+        return;
       }
 
-      // ONLINE PAYMENT
-      else {
-        const { orderId, razorOrder } = response.data;
-        openRazorpayWindow(orderId, razorOrder);
-      }
+      const { orderId, razorOrder } = response.data;
+
+      openRazorpayWindow(orderId, razorOrder);
     } catch (error) {
       console.error("Place order error:", error.response?.data || error);
+
       toast.error(
         error.response?.data?.message ||
           "Something went wrong while placing your order. Please try again.",
@@ -195,17 +193,21 @@ const Checkout = () => {
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY,
       amount: razorOrder.amount,
-      currency: "INR",
+      currency: razorOrder.currency || "INR",
       name: "The Fishy Mart",
       description: "Fish delivery order payment",
       order_id: razorOrder.id,
 
       handler: async function (response) {
         try {
+          setPlacingOrder(true);
+
           const result = await axios.post(
             `${serverUrl}/api/order/verify-payment`,
             {
               razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
               orderId,
             },
             {
@@ -213,23 +215,58 @@ const Checkout = () => {
             },
           );
 
+          if (!result.data.success) {
+            throw new Error(
+              result.data.message || "Payment verification failed.",
+            );
+          }
+
           dispatch(addMyOrder(result.data.order));
-          console.log(result.data);
 
           await clearCartFromDatabase();
 
-          navigate("/order-placed");
+          navigate("/order-placed", {
+            state: {
+              orderId: result.data.order?._id || orderId,
+            },
+          });
         } catch (error) {
-          console.log(error?.response?.data?.message);
+          console.error(
+            "Payment verification error:",
+            error.response?.data || error,
+          );
 
           toast.error(
-            error?.response?.data?.message || "Payment verification failed.",
+            error.response?.data?.message ||
+              "Payment verification failed. Please contact support if money was deducted.",
           );
+        } finally {
+          setPlacingOrder(false);
         }
+      },
+
+      modal: {
+        ondismiss: function () {
+          setPlacingOrder(false);
+          toast("Payment cancelled");
+        },
+      },
+
+      theme: {
+        color: "#0369A1",
       },
     };
 
     const rzp = new window.Razorpay(options);
+
+    rzp.on("payment.failed", function (response) {
+      setPlacingOrder(false);
+
+      toast.error(
+        response.error?.description || "Payment failed. Please try again.",
+      );
+    });
+
     rzp.open();
   };
 

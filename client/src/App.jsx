@@ -25,6 +25,8 @@ import OrderPlaced from "./pages/OrderPlaced";
 import MyOrders from "./pages/MyOrders";
 import OrderDetails from "./pages/OrderDetails";
 import OwnerOrders from "./pages/OwnerOrders";
+import useGetOwnerOrders from "./hooks/useGetMyOrders";
+import CompletedOrders from "./pages/CompletedOrders";
 
 export const serverUrl = "http://localhost:9000";
 
@@ -34,6 +36,7 @@ const App = () => {
   useGetCurrentUser();
   useGetCity();
   useGetMyShop();
+  useGetOwnerOrders();
 
   return (
     <>
@@ -118,6 +121,10 @@ const App = () => {
         <Route
           path="/owner-orders"
           element={userData ? <OwnerOrders /> : <Navigate to={"/signin"} />}
+        />
+        <Route
+          path="/complete-analytics"
+          element={userData ? <CompletedOrders /> : <Navigate to={"/signin"} />}
         />
       </Routes>
     </>

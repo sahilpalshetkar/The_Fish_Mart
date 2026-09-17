@@ -11,9 +11,12 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { serverUrl } from "../App";
+import { useDispatch } from "react-redux";
+import { setMyOrders } from "../redux/orderSlice";
 
 const OwnerOrders = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +34,7 @@ const OwnerOrders = () => {
 
       if (response.data.success) {
         setOrders(response.data.orders || []);
+        dispatch(setMyOrders(response.data.orders));
       }
     } catch (error) {
       console.error("Fetch owner orders error:", error);

@@ -180,7 +180,7 @@ const Cart = () => {
       <section className="border-b border-slate-100 bg-white">
         <div className="mx-auto max-w-7xl px-6 py-8 md:px-10">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/")}
             className="mb-5 flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-cyan-600"
           >
             <FaArrowLeft />

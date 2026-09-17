@@ -1,6 +1,16 @@
 import Cart from "../models/cart.model.js";
 import Item from "../models/item.model.js";
 
+const normalizeWeightToKg = (weight, weightUnit) => {
+  const value = Number(weight);
+
+  if (weightUnit === "g") {
+    return value / 1000;
+  }
+
+  return value;
+};
+
 const calculateTotal = (items) => {
   return items.reduce((total, item) => {
     return total + Number(item.price) * Number(item.quantity);
@@ -74,6 +84,13 @@ export const addToCart = async (req, res) => {
       });
     }
 
+    const variantWeightKg = normalizeWeightToKg(
+      variant.weight,
+      variant.weightUnit,
+    );
+
+    const requestedWeight = variantWeightKg * qty;
+
     // Find user's cart
     let cart = await Cart.findOne({ user: userId });
 
@@ -99,6 +116,7 @@ export const addToCart = async (req, res) => {
 
     if (existingItem) {
       existingItem.quantity += qty;
+      existingItem.requestedWeight = variantWeightKg * existingItem.quantity;
     } else {
       cart.items.push({
         item: item._id,
@@ -115,6 +133,7 @@ export const addToCart = async (req, res) => {
 
         price: Number(variant.price),
         quantity: qty,
+        requestedWeight,
       });
     }
 
@@ -203,6 +222,11 @@ export const updateCartQuantity = async (req, res) => {
 
     // Update quantity
     cartItem.quantity = newQuantity;
+    cartItem.requestedWeight =
+      normalizeWeightToKg(
+        cartItem.variant.weight,
+        cartItem.variant.weightUnit,
+      ) * newQuantity;
 
     // Recalculate total
     cart.totalAmount = calculateTotal(cart.items);

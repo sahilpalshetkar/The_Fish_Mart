@@ -65,6 +65,24 @@ const itemSchema = new mongoose.Schema(
           type: Boolean,
           default: true,
         },
+
+        availableWeight: {
+          type: Number,
+          default: 0,
+          min: 0,
+        },
+
+        reservedWeight: {
+          type: Number,
+          default: 0,
+          min: 0,
+        },
+
+        soldWeight: {
+          type: Number,
+          default: 0,
+          min: 0,
+        },
       },
     ],
 
@@ -77,6 +95,8 @@ const itemSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+itemSchema.index({ category: 1, isAvailable: 1 });
 
 const Item = mongoose.model("Item", itemSchema);
 

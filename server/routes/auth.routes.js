@@ -7,13 +7,20 @@ import {
   signUp,
   verifyOtp,
 } from "../controllers/auth.controllers.js";
+import {
+  authRateLimit,
+  otpSendRateLimit,
+  otpVerifyRateLimit,
+} from "../middlewares/rateLimit.js";
 
 const authRouter = express.Router();
 
-authRouter.post("/signup", signUp);
-authRouter.post("/signin", signIn);
+authRouter.post("/signup", authRateLimit, signUp);
+authRouter.post("/signin", authRateLimit, signIn);
 authRouter.get("/signout", signOut);
-authRouter.post("/send-otp", sendOtp);
-authRouter.post("/verify-otp", verifyOtp);
-authRouter.post("/reset-password", resetPassword);
+
+authRouter.post("/send-otp", otpSendRateLimit, sendOtp);
+authRouter.post("/verify-otp", otpVerifyRateLimit, verifyOtp);
+authRouter.post("/reset-password", authRateLimit, resetPassword);
+
 export default authRouter;

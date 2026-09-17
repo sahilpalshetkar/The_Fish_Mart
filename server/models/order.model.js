@@ -24,6 +24,10 @@ const orderItemSchema = new mongoose.Schema(
     },
 
     variant: {
+      _id: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+      },
       size: {
         type: String,
         required: true,
@@ -56,6 +60,29 @@ const orderItemSchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
+    requestedWeight: {
+      type: Number,
+      required: true,
+      min: 0.001,
+    },
+
+    actualWeight: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    unitPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    stockStatus: {
+      type: String,
+      enum: ["reserved", "sold", "released"],
+      default: "reserved",
+    },
   },
   {
     _id: true,
@@ -70,9 +97,6 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
-    // =========================
-    // ORDER ITEMS
-    // =========================
     items: {
       type: [orderItemSchema],
       required: true,
@@ -86,9 +110,6 @@ const orderSchema = new mongoose.Schema(
       },
     },
 
-    // =========================
-    // PRICE
-    // =========================
     subtotal: {
       type: Number,
       required: true,
@@ -108,9 +129,6 @@ const orderSchema = new mongoose.Schema(
       min: 0,
     },
 
-    // =========================
-    // DELIVERY ADDRESS
-    // =========================
     deliveryAddress: {
       fullName: {
         type: String,
@@ -162,9 +180,6 @@ const orderSchema = new mongoose.Schema(
       },
     },
 
-    // =========================
-    // LOCATION
-    // =========================
     location: {
       latitude: {
         type: Number,
@@ -175,9 +190,6 @@ const orderSchema = new mongoose.Schema(
       },
     },
 
-    // =========================
-    // PAYMENT
-    // =========================
     paymentMethod: {
       type: String,
       enum: ["COD", "ONLINE"],
@@ -191,6 +203,12 @@ const orderSchema = new mongoose.Schema(
       default: "pending",
     },
 
+    refundStatus: {
+      type: String,
+      enum: ["none", "pending", "processed", "failed"],
+      default: "none",
+    },
+
     razorpayOrderId: {
       type: String,
       default: null,
@@ -201,9 +219,6 @@ const orderSchema = new mongoose.Schema(
       default: null,
     },
 
-    // =========================
-    // ORDER STATUS
-    // =========================
     orderStatus: {
       type: String,
       enum: [
@@ -232,13 +247,43 @@ const orderSchema = new mongoose.Schema(
       default: null,
     },
 
-    // DELIVERY OTP
+    refundStatus: {
+      type: String,
+      enum: ["none", "pending", "processed", "failed"],
+      default: "none",
+    },
+
     deliveryOtp: {
       type: String,
+      select: false,
+    },
+    deliveryOtpExpiresAt: {
+      type: Date,
+      select: false,
+    },
+    deliveryOtpLastSentAt: {
+      type: Date,
+      select: false,
+    },
+    deliveryOtpAttempts: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+      select: false,
+    },
+    stockStatus: {
+      type: String,
+      enum: ["none", "reserved", "sold", "released"],
+      default: "reserved",
+    },
+
+    stockReservedAt: {
+      type: Date,
       default: null,
     },
 
-    deliveryOtpExpiresAt: {
+    stockReservationExpiresAt: {
       type: Date,
       default: null,
     },
@@ -248,6 +293,13 @@ const orderSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+orderSchema.index({ user: 1, createdAt: -1 });
+orderSchema.index({
+  stockStatus: 1,
+  stockReservationExpiresAt: 1,
+});
+orderSchema.index({ razorpayOrderId: 1 });
 
 const Order = mongoose.model("Order", orderSchema);
 
